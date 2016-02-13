@@ -1,11 +1,11 @@
 <?php
 
-namespace App\Http\Controllers\Coursera;
+namespace UNELearning\Http\Controllers\Coursera;
 
 use Illuminate\Http\Request;
 use GuzzleHttp\Client;
-use App\Http\Requests;
-use App\Http\Controllers\Controller;
+use UNELearning\Http\Requests;
+use UNELearning\Http\Controllers\Controller;
 
 class NewApiController extends Controller
 {

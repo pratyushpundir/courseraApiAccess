@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Providers;
+namespace UNELearning\Providers;
 
 use Illuminate\Support\ServiceProvider;
 

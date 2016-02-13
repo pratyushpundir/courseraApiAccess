@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Events;
+namespace UNELearning\Events;
 
 abstract class Event
 {
