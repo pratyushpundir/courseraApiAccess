@@ -156,6 +156,12 @@ return [
         UNELearning\Providers\EventServiceProvider::class,
         UNELearning\Providers\RouteServiceProvider::class,
 
+
+        /*
+         * 3rd Party Service Providers
+         */
+        'Maatwebsite\Excel\ExcelServiceProvider',
+
     ],
 
     /*
@@ -202,6 +208,11 @@ return [
         'Validator' => Illuminate\Support\Facades\Validator::class,
         'View'      => Illuminate\Support\Facades\View::class,
 
+
+        /**
+         * 3rd Party Facades/Aliases
+         */
+        'Excel' => 'Maatwebsite\Excel\Facades\Excel',
     ],
 
 ];
