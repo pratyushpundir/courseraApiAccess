@@ -14,59 +14,23 @@ class NewApiController extends Controller
 {
 
     protected $serializedAttributes = [
-        'primary_languages',
-        'subtitle_languages',
-        'instructor_ids',
-        'partner_ids',
-        'certificates',
-        'specializations',
-        's12n_ids',
-        'domain_types',
-        'categories'
+        'primary_languages','subtitle_languages','instructor_ids','partner_ids','certificates','specializations','s12n_ids','domain_types','categories'
     ];
 
     public function courses()
     {
-        $rcvdCourseData = $this->getAllCourses();
-
-        $addedRecords = $skippedRecords = 0;
-
-        foreach($rcvdCourseData as $rcvdCourse) {
-            $rcvdCourseId = $rcvdCourse['id'];
-
-            $rcvdCourseExists = Course::where('coursera_id', $rcvdCourseId)->first();
-
-            if(!$rcvdCourseExists) {
-                $course = new Course;
-
-                foreach($rcvdCourse as $key => $value) {
-                    if($key == 'id') {
-                        $dbPropertyName = 'coursera_id';
-                    } else {
-                        $dbPropertyName = snake_case($key);
-                    }
-
-                    if(is_array($value)) {
-                        $course->{$dbPropertyName} = base64_encode(serialize($value));
-                        // $course->{$dbPropertyName} = $value;
-                    } else {
-                        $course->{$dbPropertyName} = $value;
-                    }
-                }
-
-                $course->save();
-
-                $addedRecords++;
-            } else {
-                $skippedRecords++;
-            }
-        }
-
-        return $results = [
-            'added' => $addedRecords,
-            'skipped' => $skippedRecords,
-            'records' => Course::all()
+        $startAt = 1;
+        $recordsPerPage = 100;
+        $recordName = 'courses';
+        $fields = [
+            'primaryLanguages','subtitleLanguages','partnerLogo','instructorIds','partnerIds','photoUrl','certificates','description','startDate','workload','previewLink','specializations','s12nIds','domainTypes','categories'
         ];
+
+        $rcvdCourseData = $this->getDataFromApi($recordName, $startAt, $recordsPerPage, $fields);
+
+        $results = $this->saveRecords($rcvdCourseData, $recordName);
+
+        return $results;
     }
     
     public function coursesExport()
@@ -97,48 +61,56 @@ class NewApiController extends Controller
     
     public function partners()
     {
-        $client = new Client([
-            'base_uri' => 'https://api.coursera.org/api/'
-        ]);
+        $startAt = 1;
+        $recordsPerPage = 100;
+        $recordName = 'partners';
+        $fields = ['id','name','shortName','description','banner','courseIds','instructorIds','primaryColor','logo','squareLogo','rectangularLogo','links','location'
+        ];
 
-        $response = $client->request('GET', 'partners.v1?start=101&limit=500');
-        $contents = json_decode($response->getBody()->getContents(), true);
+        $rcvdPartnerData = $this->getDataFromApi($recordName, $startAt, $recordsPerPage, $fields);
 
-        return ($contents);
+        $results = $this->saveRecords($rcvdPartnerData, $recordName);
+
+        return $results;
     }
 
     public function instructors()
     {
-        $client = new Client([
-            'base_uri' => 'https://api.coursera.org/api/'
-        ]);
+        $startAt = 1;
+        $recordsPerPage = 100;
+        $recordName = 'instructors';
+        $fields = [
+            'id','photo','photo150','bio','prefixName','firstName','middleName','lastName','suffixName','fullName','title','department','website','websiteTwitter','websiteFacebook','websiteLinkedin','websiteGplus','shortName'
+        ];
 
-        $response = $client->request('GET', 'instructors.v1?start=101&limit=500');
-        $contents = json_decode($response->getBody()->getContents(), true);
+        $rcvdCourseData = $this->getDataFromApi($recordName, $startAt, $recordsPerPage, $fields);
 
-        return ($contents);
+        $results = $this->saveRecords($rcvdCourseData, $recordName);
+
+        return $results;
     }
 
-    public function getAllCourses()
+    public function getDataFromApi($item, $startAt, $recordsPerPage, array $fields)
     {
         $client = new Client([
             'base_uri' => 'https://api.coursera.org/api/'
         ]);
 
-        $startAt = 1;
-        $recordsPerPage = 100;
+        $fieldString = implode(',', $fields);
 
-        $response = $client->request('GET', 'courses.v1?start=' . $startAt . '&limit=' . $recordsPerPage);
+
+        $shortUrl = $item . '.v1?start=' . $startAt . '&limit=' . $recordsPerPage;
         
+        $response = $client->request('GET', $shortUrl);
         $contents = json_decode($response->getBody()->getContents(), true);
 
         $paging = $contents['paging'];
-        $totalRecords = $paging['total'];
+        $totalRecords = (isset($paging['total'])) ? $paging['total'] : 1;
         
         $results = [];
         
         for($startAt = 1; $startAt <= $totalRecords + 1; $startAt += $recordsPerPage) {
-            $response = $client->request('GET', 'courses.v1?start=' . $startAt . '&limit=' . $recordsPerPage . '&fields=primaryLanguages,subtitleLanguages,partnerLogo,instructorIds,partnerIds,photoUrl,certificates,description,startDate,workload,previewLink,specializations,s12nIds,domainTypes,categories');
+            $response = $client->request('GET', $item . '.v1?start=' . $startAt . '&limit=' . $recordsPerPage . '&fields=' . $fieldString);
         
             $contents = json_decode($response->getBody()->getContents(), true);
             
@@ -149,5 +121,42 @@ class NewApiController extends Controller
 
         return $results;
 
+    }
+
+    public function saveRecords($records, $recordName)
+    {
+        $addedRecords = $skippedRecords = 0;
+        
+        foreach($records as $rcvdRecord) {
+            $rcvdRecordId = $rcvdRecord['id'];
+            $modelName = 'UNELearning\Coursera\NewApi\\' . studly_case(str_singular($recordName));
+            $rcvdRecordExists = $modelName::where('coursera_id', $rcvdRecordId)->first();
+            if(!$rcvdRecordExists) {
+                $record = new $modelName();
+                foreach($rcvdRecord as $key => $value) {
+                    if($key == 'id') {
+                        $dbPropertyName = 'coursera_id';
+                    } else {
+                        $dbPropertyName = snake_case($key);
+                    }
+                    if(is_array($value)) {
+                        $record->{$dbPropertyName} = base64_encode(serialize($value));
+                        // $record->{$dbPropertyName} = $value;
+                    } else {
+                        $record->{$dbPropertyName} = $value;
+                    }
+                }
+                $record->save();
+                $addedRecords++;
+            } else {
+                $skippedRecords++;
+            }
+        }
+
+        return $results = [
+            'record_name' => $recordName,
+            'added' => $addedRecords,
+            'skipped' => $skippedRecords
+        ];
     }
 }
