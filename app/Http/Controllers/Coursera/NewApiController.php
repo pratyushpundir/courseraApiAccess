@@ -12,43 +12,85 @@ use Log;
 
 class NewApiController extends Controller
 {
+
+    protected $serializedAttributes = [
+        'primary_languages',
+        'subtitle_languages',
+        'instructor_ids',
+        'partner_ids',
+        'certificates',
+        'specializations',
+        's12n_ids',
+        'domain_types',
+        'categories'
+    ];
+
     public function courses()
     {
-        $client = new Client([
-            'base_uri' => 'https://api.coursera.org/api/'
-        ]);
+        $rcvdCourseData = $this->getAllCourses();
 
-        $response = $client->request('GET', 'courses.v1?start=1&limit=2000&fields=primaryLanguages,subtitleLanguages,partnerLogo,instructorIds,partnerIds,photoUrl,certificates,description,startDate,workload,previewLink,specializations,s12nIds,domainTypes,categories');
-        $contents = json_decode($response->getBody()->getContents(), true);
-        $rcvdCourseData = $contents['elements'];
+        $addedRecords = $skippedRecords = 0;
 
         foreach($rcvdCourseData as $rcvdCourse) {
-            $course = new Course;
+            $rcvdCourseId = $rcvdCourse['id'];
 
-            foreach($rcvdCourse as $key => $value) {
-                if($key == 'id') {
-                    $dbPropertyName = 'coursera_id';
-                } else {
-                    $dbPropertyName = snake_case($key);
-                    // Log::warning(Log::warning($key . ' => ' . $dbPropertyName . ' => ' . serialize($value)));
+            $rcvdCourseExists = Course::where('coursera_id', $rcvdCourseId)->first();
+
+            if(!$rcvdCourseExists) {
+                $course = new Course;
+
+                foreach($rcvdCourse as $key => $value) {
+                    if($key == 'id') {
+                        $dbPropertyName = 'coursera_id';
+                    } else {
+                        $dbPropertyName = snake_case($key);
+                    }
+
+                    if(is_array($value)) {
+                        $course->{$dbPropertyName} = base64_encode(serialize($value));
+                        // $course->{$dbPropertyName} = $value;
+                    } else {
+                        $course->{$dbPropertyName} = $value;
+                    }
                 }
 
-                $course->{$dbPropertyName} = is_array($value) ? serialize($value) : $value;
-            }
+                $course->save();
 
-            $course->save();
+                $addedRecords++;
+            } else {
+                $skippedRecords++;
+            }
         }
 
-        return Course::all();
+        return $results = [
+            'added' => $addedRecords,
+            'skipped' => $skippedRecords,
+            'records' => Course::all()
+        ];
     }
     
     public function coursesExport()
     {
-        $savedCourseData = Course::all();
+        $savedCourseData = Course::all()->toArray();
 
-        Excel::create('un-coursera-data-new-api', function($excel) use($savedCourseData) {
-            $excel->sheet('Courses', function($sheet) use($savedCourseData) {
-                $sheet->fromModel($savedCourseData);
+        $exportArray = [];
+        $tempCourse = [];
+
+        foreach($savedCourseData as $savedCourse) {
+            foreach($savedCourse as $key => $value) {
+                if(in_array($key, $this->serializedAttributes)) {
+                    $tempCourse[$key] = json_encode(unserialize(base64_decode($value)));
+                } else {
+                    $tempCourse[$key] = $value;
+                }
+            }
+            
+            array_push($exportArray, $tempCourse);
+        }
+
+        Excel::create('un-coursera-data-new-api', function($excel) use($exportArray) {
+            $excel->sheet('Courses', function($sheet) use($exportArray) {
+                $sheet->fromArray($exportArray);
             });
         })->export('xlsx');
     }
@@ -75,5 +117,37 @@ class NewApiController extends Controller
         $contents = json_decode($response->getBody()->getContents(), true);
 
         return ($contents);
+    }
+
+    public function getAllCourses()
+    {
+        $client = new Client([
+            'base_uri' => 'https://api.coursera.org/api/'
+        ]);
+
+        $startAt = 1;
+        $recordsPerPage = 100;
+
+        $response = $client->request('GET', 'courses.v1?start=' . $startAt . '&limit=' . $recordsPerPage);
+        
+        $contents = json_decode($response->getBody()->getContents(), true);
+
+        $paging = $contents['paging'];
+        $totalRecords = $paging['total'];
+        
+        $results = [];
+        
+        for($startAt = 1; $startAt <= $totalRecords + 1; $startAt += $recordsPerPage) {
+            $response = $client->request('GET', 'courses.v1?start=' . $startAt . '&limit=' . $recordsPerPage . '&fields=primaryLanguages,subtitleLanguages,partnerLogo,instructorIds,partnerIds,photoUrl,certificates,description,startDate,workload,previewLink,specializations,s12nIds,domainTypes,categories');
+        
+            $contents = json_decode($response->getBody()->getContents(), true);
+            
+            foreach($contents['elements'] as $course) {
+                array_push($results, $course);
+            }
+        }
+
+        return $results;
+
     }
 }
