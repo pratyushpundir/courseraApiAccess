@@ -14,19 +14,19 @@ class CreateCourseraNewApiPartnersTable extends Migration
     {
         Schema::create('coursera_new_api_partners', function (Blueprint $table) {
             $table->increments('id');
-            $table->string('coursera_id');
+            $table->string('coursera_id')->unique();
             $table->string('name');
             $table->string('short_name');
             $table->string('description');
             $table->string('banner');
-            $table->string('course_ids');
-            $table->string('instructor_ids');
+            $table->longText('course_ids');
+            $table->longText('instructor_ids');
             $table->string('primary_color');
             $table->string('logo');
             $table->string('square_logo');
             $table->string('rectangular_logo');
-            $table->string('links');
-            $table->string('location');
+            $table->longText('links');
+            $table->longText('location');
             $table->timestamps();
         });
     }

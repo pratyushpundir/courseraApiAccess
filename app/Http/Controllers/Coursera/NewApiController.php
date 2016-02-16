@@ -14,80 +14,64 @@ class NewApiController extends Controller
 {
 
     protected $serializedAttributes = [
-        'primary_languages','subtitle_languages','instructor_ids','partner_ids','certificates','specializations','s12n_ids','domain_types','categories'
+        'courses' => [
+            'primary_languages','subtitle_languages','instructor_ids','partner_ids','certificates','specializations','s12n_ids','domain_types','categories'
+        ],
+        'partners' => ['course_ids','instructor_ids','links','location'],
+        'instructors' => []
     ];
 
     public function courses()
     {
-        $startAt = 1;
-        $recordsPerPage = 100;
-        $recordName = 'courses';
+        $recordType = 'courses';
         $fields = [
             'primaryLanguages','subtitleLanguages','partnerLogo','instructorIds','partnerIds','photoUrl','certificates','description','startDate','workload','previewLink','specializations','s12nIds','domainTypes','categories'
         ];
 
-        $rcvdCourseData = $this->getDataFromApi($recordName, $startAt, $recordsPerPage, $fields);
-
-        $results = $this->saveRecords($rcvdCourseData, $recordName);
+        $rcvdCourseData = $this->getDataFromApi($recordType, null, null, $fields);
+        $results = $this->saveRecords($rcvdCourseData, $recordType);
 
         return $results;
     }
     
-    public function coursesExport()
-    {
-        $savedCourseData = Course::all()->toArray();
-
-        $exportArray = [];
-        $tempCourse = [];
-
-        foreach($savedCourseData as $savedCourse) {
-            foreach($savedCourse as $key => $value) {
-                if(in_array($key, $this->serializedAttributes)) {
-                    $tempCourse[$key] = json_encode(unserialize(base64_decode($value)));
-                } else {
-                    $tempCourse[$key] = $value;
-                }
-            }
-            
-            array_push($exportArray, $tempCourse);
-        }
-
-        Excel::create('un-coursera-data-new-api', function($excel) use($exportArray) {
-            $excel->sheet('Courses', function($sheet) use($exportArray) {
-                $sheet->fromArray($exportArray);
-            });
-        })->export('xlsx');
-    }
-    
     public function partners()
     {
-        $startAt = 1;
-        $recordsPerPage = 100;
-        $recordName = 'partners';
+        $recordType = 'partners';
         $fields = ['id','name','shortName','description','banner','courseIds','instructorIds','primaryColor','logo','squareLogo','rectangularLogo','links','location'
         ];
 
-        $rcvdPartnerData = $this->getDataFromApi($recordName, $startAt, $recordsPerPage, $fields);
-
-        $results = $this->saveRecords($rcvdPartnerData, $recordName);
+        $rcvdPartnerData = $this->getDataFromApi($recordType, null, null, $fields);
+        $results = $this->saveRecords($rcvdPartnerData, $recordType);
 
         return $results;
     }
 
     public function instructors()
     {
-        $startAt = 1;
-        $recordsPerPage = 100;
-        $recordName = 'instructors';
+        $recordType = 'instructors';
         $fields = [
             'id','photo','photo150','bio','prefixName','firstName','middleName','lastName','suffixName','fullName','title','department','website','websiteTwitter','websiteFacebook','websiteLinkedin','websiteGplus','shortName'
         ];
 
-        $rcvdCourseData = $this->getDataFromApi($recordName, $startAt, $recordsPerPage, $fields);
-
-        $results = $this->saveRecords($rcvdCourseData, $recordName);
+        $rcvdInstructorData = $this->getDataFromApi($recordType, null, null, $fields);
+        $results = $this->saveRecords($rcvdInstructorData, $recordType);
 
         return $results;
+    }
+
+    public function coursesExport()
+    {
+        $this->export('courses');
+    }
+    
+    public function partnersExport()
+    {
+        $this->export('partners');
+    }
+    
+    public function instructorsExport()
+    {
+        $this->export('instructors');
     }
 
     public function getDataFromApi($item, $startAt, $recordsPerPage, array $fields)
@@ -95,6 +79,9 @@ class NewApiController extends Controller
         $client = new Client([
             'base_uri' => 'https://api.coursera.org/api/'
         ]);
+
+        $startAt = ($startAt == null) ? 1 : $startAt;
+        $recordsPerPage = ($recordsPerPage == null) ? 100 : $recordsPerPage;
 
         $fieldString = implode(',', $fields);
 
@@ -123,13 +110,13 @@ class NewApiController extends Controller
 
     }
 
-    public function saveRecords($records, $recordName)
+    public function saveRecords($records, $recordType)
     {
         $addedRecords = $skippedRecords = 0;
         
         foreach($records as $rcvdRecord) {
             $rcvdRecordId = $rcvdRecord['id'];
-            $modelName = 'UNELearning\Coursera\NewApi\\' . studly_case(str_singular($recordName));
+            $modelName = $this->getModelName($recordType);
             $rcvdRecordExists = $modelName::where('coursera_id', $rcvdRecordId)->first();
             if(!$rcvdRecordExists) {
                 $record = new $modelName();
@@ -154,9 +141,41 @@ class NewApiController extends Controller
         }
 
         return $results = [
-            'record_name' => $recordName,
+            'record_name' => $recordType,
             'added' => $addedRecords,
             'skipped' => $skippedRecords
         ];
+    }
+
+    public function export($recordType)
+    {
+        $modelName = $this->getModelName($recordType);
+        $savedRecords = $modelName::all()->toArray();
+
+        $exportArray = [];
+        $tempCourse = [];
+
+        foreach($savedRecords as $savedRecord) {
+            foreach($savedRecord as $key => $value) {
+                if(in_array($key, $this->serializedAttributes[$recordType])) {
+                    $tempCourse[$key] = json_encode(unserialize(base64_decode($value)));
+                } else {
+                    $tempCourse[$key] = $value;
+                }
+            }
+            
+            array_push($exportArray, $tempCourse);
+        }
+
+        Excel::create('un-coursera-data-new-api-' . $recordType, function($excel) use($recordType, $exportArray) {
+            $excel->sheet($recordType, function($sheet) use($exportArray) {
+                $sheet->fromArray($exportArray);
+            });
+        })->export('xlsx');
+    }
+
+    public function getModelName($recordType)
+    {
+        return 'UNELearning\Coursera\NewApi\\' . studly_case(str_singular($recordType));
     }
 }

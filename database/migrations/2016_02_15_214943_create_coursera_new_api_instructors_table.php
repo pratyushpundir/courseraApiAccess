@@ -14,10 +14,10 @@ class CreateCourseraNewApiInstructorsTable extends Migration
     {
         Schema::create('coursera_new_api_instructors', function (Blueprint $table) {
             $table->increments('id');
-            $table->string('coursera_id');
+            $table->string('coursera_id')->unique();
             $table->string('photo');
             $table->string('photo150');
-            $table->text('bio');
+            $table->longText('bio');
             $table->string('prefix_name');
             $table->string('first_name');
             $table->string('middle_name');
