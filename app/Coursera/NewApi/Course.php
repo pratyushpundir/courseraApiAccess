@@ -31,17 +31,4 @@ class Course extends Model
         'domain_type',
         'categories'
     ];
-
-    
-    // protected $casts = [
-    //     'primary_languages' => 'array',
-    //     'subtitle_languages' => 'array',
-    //     'instructor_ids' => 'array',
-    //     'partner_ids' => 'array',
-    //     'certificates' => 'array',
-    //     'specializations' => 'array',
-    //     's12n_ids' => 'array',
-    //     'domain_types' => 'array',
-    //     'categories' => 'array'
-    // ];
 }

@@ -1,4 +1,4 @@
-@extends('layouts.master')
+@extends('layouts.basic')
 
 @section('title', 'Unnati E-Learning Data')
 
