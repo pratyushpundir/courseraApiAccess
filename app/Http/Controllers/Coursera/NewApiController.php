@@ -56,57 +56,49 @@ class NewApiController extends Controller
 
     public function coursesExport()
     {
-        $this->export('courses');
+        $commandResponse = Artisan::call('coursera:export', [
+            '--recordType' => 'courses'
+        ]);
+
+        return ($commandResponse == 0) 
+               ? 'Data successfully exported and emailed!' 
+               : 'Oops! Something went wrong!';
     }
     
 
     public function partnersExport()
     {
-        $this->export('partners');
+        $commandResponse = Artisan::call('coursera:export', [
+            '--recordType' => 'courses'
+        ]);
+
+        return ($commandResponse == 0) 
+               ? 'Data successfully exported and emailed!' 
+               : 'Oops! Something went wrong!';
     }
     
 
     public function instructorsExport()
     {
-        $this->export('instructors');
+        $commandResponse = Artisan::call('coursera:export', [
+            '--recordType' => 'courses'
+        ]);
+
+        return ($commandResponse == 0) 
+               ? 'Data successfully exported and emailed!' 
+               : 'Oops! Something went wrong!';
     }
 
-
-    /**
-     * Export stored data of a given record-type to Excel
-     * @param  String $recordType [Record type to be exported]
-     * @return Excel              [Downloads the created Excel export file]
-     */
-    public function export($recordType)
+    
+    public function allExport()
     {
-        $modelName = $this->getModelName($recordType);
-        $savedRecords = $modelName::all()->toArray();
+        $commandResponse = Artisan::call('coursera:export', [
+            '--recordType' => 'all'
+        ]);
 
-        $exportArray = [];
-        $tempCourse = [];
-
-        foreach($savedRecords as $savedRecord) {
-            foreach($savedRecord as $key => $value) {
-
-                // Check to see if the given attribute is a serialized type
-                if(in_array($key, $this->serializedAttributes[$recordType])) {
-                    $tempCourse[$key] = json_encode(unserialize(base64_decode($value)));
-                } else {
-                    $tempCourse[$key] = $value;
-                }
-
-
-            }
-            
-            array_push($exportArray, $tempCourse);
-        }
-
-        Excel::create('un-coursera-data-new-api-' . $recordType, function($excel) use($recordType, $exportArray) {
-            $excel->sheet($recordType, function($sheet) use($exportArray) {
-                $sheet->fromArray($exportArray);
-            });
-        })->export('xlsx');
+        return ($commandResponse == 0) 
+               ? 'Data successfully exported and emailed!' 
+               : 'Oops! Something went wrong!';
     }
-
     
 }

@@ -14,6 +14,7 @@ class Kernel extends ConsoleKernel
      */
     protected $commands = [
         Commands\UpdateCourseraData::class,
+        Commands\ExportCourseraData::class,
     ];
 
     /**
@@ -24,7 +25,10 @@ class Kernel extends ConsoleKernel
      */
     protected function schedule(Schedule $schedule)
     {
-        // $schedule->command('inspire')
-        //          ->hourly();
+        $schedule->command('coursera:update --all')->withoutOverlapping()
+                 ->daily();
+        
+        $schedule->command('coursera:export --all')->withoutOverlapping()
+                 ->weekly();
     }
 }

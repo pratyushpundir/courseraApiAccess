@@ -6,7 +6,6 @@ use UNELearning\Coursera\NewApi\Course;
 use Illuminate\Console\Command;
 use Schema, Artisan, Log;
 use GuzzleHttp\Client;
-use Excel;
 
 class UpdateCourseraData extends Command
 {
