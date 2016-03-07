@@ -1,8 +1,8 @@
-<h1>Data exported file(s) attached for</h1>
+<h4>Data exported file(s) attached for</h4>
 
 <ul>
     @foreach($record_types as $recordType)
-        <li>$recordType</li>
+        <li>{{$recordType}}</li>
     @endforeach
 </ul>
 

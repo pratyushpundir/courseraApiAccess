@@ -6,6 +6,7 @@ use UNELearning\Coursera\NewApi\Course;
 use Illuminate\Console\Command;
 use Schema, Artisan, Log;
 use GuzzleHttp\Client;
+use Illuminate\Http\Response;
 
 class UpdateCourseraData extends Command
 {
@@ -73,7 +74,7 @@ class UpdateCourseraData extends Command
             $this->table($headers, $results);
         }
 
-        return $results;
+        return response()->json($results);
     }
 
 

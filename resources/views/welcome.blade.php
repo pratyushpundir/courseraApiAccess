@@ -25,7 +25,7 @@
                     </a>
                 </li>
                 <li class="list-group-item">
-                    <a href="/coursera/new-api/Instructors">
+                    <a href="/coursera/new-api/instructors">
                         Import Instructors
                     </a> | 
                     <a href="/coursera/new-api/instructors/export">

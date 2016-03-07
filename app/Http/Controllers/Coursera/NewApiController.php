@@ -69,7 +69,7 @@ class NewApiController extends Controller
     public function partnersExport()
     {
         $commandResponse = Artisan::call('coursera:export', [
-            '--recordType' => 'courses'
+            '--recordType' => 'partners'
         ]);
 
         return ($commandResponse == 0) 
@@ -81,7 +81,7 @@ class NewApiController extends Controller
     public function instructorsExport()
     {
         $commandResponse = Artisan::call('coursera:export', [
-            '--recordType' => 'courses'
+            '--recordType' => 'instructors'
         ]);
 
         return ($commandResponse == 0) 

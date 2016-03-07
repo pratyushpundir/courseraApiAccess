@@ -63,7 +63,7 @@ class ExportCourseraData extends Command
                 $message->attach($fileInfo['full']);
             });
 
-            $this->info('File exported and emailed to ' . env('PRIMARY_ADMIN_EMAIL'));
+            $this->info('File exported and emailed to ' . env('PRIMARY_ADMIN_EMAIL') . ' & ' . env('SECONDARY_ADMIN_EMAIL'));
         } else {
             $recordTypes = ['courses', 'instructors', 'partners'];
             $fileInfo = [];
@@ -83,7 +83,7 @@ class ExportCourseraData extends Command
                 }
             });
 
-            $this->info('Files exported and emailed to ' . env('PRIMARY_ADMIN_EMAIL'));
+            $this->info('Files exported and emailed to ' . env('PRIMARY_ADMIN_EMAIL') . ' & ' . env('SECONDARY_ADMIN_EMAIL'));
         }
     }
 
@@ -120,7 +120,7 @@ class ExportCourseraData extends Command
             $excel->sheet($recordType, function($sheet) use($exportArray) {
                 $sheet->fromArray($exportArray);
             });
-        })->store('xlsx', storage_path('exports'), true);
+        })->store('xlsx', storage_path('exports/coursera'), true);
 
         return $pathInfo;
     }
