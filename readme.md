@@ -26,8 +26,8 @@ This is a laravel 5 app so the same requirements apply:
  - Rename the file called `example.env` in the root of this directory to just `.env`. Change details as needed in this file. At the minimum, you will have to enter your database credentials. You should also add your email setup here as needed. Laravel supports "smtp", "mail", "sendmail", "mailgun", "mandrill" and a few others. I chose to go with Mailgun.
  - Run `php artisan key:genrate` to setup the app key.
  - Run `php artisan migrate` to create the databases needed.
- - Run `php artisan serve` in the root. This will launch a simple local server on http:\\localhost:8000.
- - Visit http:\\localhost:8000 in a browser of your choice. - NO WORK HAS BEEN DONE ON THE FRONTEND YET SO STAY OFF OF THIS. USE THE COMMANDS DETAILED BELOW INSTEAD.
+ - Run `php artisan serve` in the root. This will launch a simple local server on http://localhost:8000.
+ - Visit http://localhost:8000 in a browser of your choice. - NO WORK HAS BEEN DONE ON THE FRONTEND YET SO STAY OFF OF THIS. USE THE COMMANDS DETAILED BELOW INSTEAD.
 
 
 # Basic Usage Instructions
