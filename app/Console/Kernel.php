@@ -26,9 +26,9 @@ class Kernel extends ConsoleKernel
     protected function schedule(Schedule $schedule)
     {
         $schedule->command('coursera:update --all')->withoutOverlapping()
-                 ->daily();
+                 ->everyMinute();
         
         $schedule->command('coursera:export --all')->withoutOverlapping()
-                 ->weekly();
+                 ->everyFiveMinutes();
     }
 }
