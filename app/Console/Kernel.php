@@ -26,9 +26,11 @@ class Kernel extends ConsoleKernel
     protected function schedule(Schedule $schedule)
     {
         $schedule->command('coursera:update --recordType=all')->withoutOverlapping()
-                 ->everyMinute();
+                 ->dailyAt('08:00')
+                 ->timezone('America/Chicago');
         
         $schedule->command('coursera:export --recordType=all')->withoutOverlapping()
-                 ->everyFiveMinutes();
+                 ->monthlyOn(6, '09:00')
+                 ->timezone('America/Chicago');
     }
 }
